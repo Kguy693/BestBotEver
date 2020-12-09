@@ -1,20 +1,3 @@
-# bestbot.py
-#import os
-#
-#import discord
-#from dotenv import load_dotenv
-
-#load_dotenv()
-#TOKEN = os.getenv('DISCORD_TOKEN')
-
-#client = discord.Client()
-
-#@client.event
-#async def on_ready():
-#    print(f'{client.user} has connected to Discord!')
-
-#client.run(TOKEN)
-
 import asyncio
 import os
 import discord
@@ -27,7 +10,42 @@ import hyperlink
 from discord import FFmpegPCMAudio
 import youtube_dl
 from discord.utils import get
+import urllib.parse, urllib.request, re
+import lavalink
+from glob import glob
+from pathlib import Path
 
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+'''class MusicCog(commands.Cog):
+    def __init__(self, client):
+        self.client = client
+        self.client.music = lavalink.Client(self.client.user.id)
+        self.client.music.add_node('localhost', 2333, 'youshallnotpass', 'na', 'mynodemusic')
+        self.client.add_listener(self.bot.music.voice_update_handler, 'on_socket_response')
+        self.client.music.add_event_hook(self.track_hook)
+
+    @commands.command(name="hola")
+    async def hi(self, ctx):
+        await ctx.send("hi")'''
+
+
+class Hi939(commands.Cog):
+    @commands.command()
+    async def nopls(self, ctx):
+        await ctx.send('no pls no')
 
 players = {}
 
@@ -37,7 +55,26 @@ client = commands.Bot(command_prefix = '.') #prefix is .
 async def on_ready(): #when the bot first boots up online it will say hi
     general_channel = client.get_channel(761659292716892160)
     #await general_channel.send('I hopped online')
-    print('Bot is Ready.')
+    print(f'{client.user} is Ready.')
+    client.load_extension('cogs.lavalinkmusic')
+
+reaction_title  = ""
+reactions = {}
+
+
+
+
+
+
+@client.event 
+async def on_ready(): #when the bot first boots up online it will say hi
+    general_channel = client.get_channel(761659292716892160)
+    #await general_channel.send('I hopped online')
+    print(f'{client.user} is Ready.')
+    time.sleep(3)
+    client.load_extension('cogs.lavalinkmusic')
+   
+    
 
 @client.event
 async def on_message(message):
@@ -56,9 +93,9 @@ async def on_message(message):
 @client.command(name="randint") #gives you a random number between 1 and 10
 async def randint(ctx, arg1, arg2):
 
-    int(arg1)
-    int(arg2)     
-    RandintEmbed = discord.Embed(title="Random Number", description="Chooses a random number between 1 and 10", color=0xff0000)
+    arg1 = int(arg1)
+    arg2 = int(arg2)     
+    RandintEmbed = discord.Embed(title="Random Number", description=f"Chooses a random number between {arg1} and {arg2}", color=0xff0000)
     RandintEmbed.add_field(name="It is...", value=random.randint(arg1, arg2), inline=False)
 
     await ctx.send(embed=RandintEmbed)
@@ -106,14 +143,14 @@ async def utc(ctx):
     
     await ctx.send(embed=TimeEmbed) #send embed when command is typed
 
-url = hyperlink.parse(u"https://github.com/Kguy693/BestBotEver")
+url = hyperlink.parse(u"https://github.com/Kguy693/BestBotEver/blob/main/BestBot.py")
 @client.command()
 async def code(ctx):
     CodeEmbed = discord.Embed(title="Github Repository", description=url.to_text(), color=0x00ff00)
 
     await ctx.send(embed=CodeEmbed)
 
-@client.command(pass_context=True, aliases=['j', 'joi'])
+'''@client.command(pass_context=True, aliases=['j', 'joi'])
 async def join(ctx):
     channel = ctx.message.author.voice.channel
     voice = get(client.voice_clients, guild=ctx.guild)
@@ -131,7 +168,7 @@ async def join(ctx):
         voice = await channel.connect()
         print(f"The bot has connected to {channel}\n")
 
-    await ctx.send(f"Joined {channel}")
+    await ctx.send(f"Joined {channel}")'''
 
 @client.command(pass_context=True, aliases=['l', 'lea'])
 async def leave(ctx):
@@ -165,12 +202,14 @@ ffmpeg_options = {
  
  
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
+
+
  
  
  
  
 @client.command(pass_context=True, aliases=['p', 'pla'])
-async def play(ctx, url: str):
+async def yturl(ctx, url: str):
 
     song_there = os.path.isfile("song.mp3")
     try:
@@ -214,26 +253,93 @@ async def play(ctx, url: str):
     print("playing\n")
 
 @client.command()
+async def ytsearch(ctx, *, query):
+    query_string = urllib.parse.urlencode({
+        'search_query': query
+    })
+    htm_content = urllib.request.urlopen(
+        'http://www.youtube.com/results?' + query_string
+    )
+    search_results = re.findall('href=\"\\/watch\\?v=(.{11})', htm_content.read().decode())
+    print('http://www.youtube.com/watch?v=' + search_results[0])
+
+
+@client.command()
 async def reactionpost(ctx):
 
     ReactionEmbed = discord.Embed(title="Create your reaction post", color=0xcb6ea5)
     ReactionEmbed.set_author(name="BestBot")
-    ReactionEmbed.add_field(name="Set Title", value="--reaction_set_title \"new title\"")
+    ReactionEmbed.add_field(name="Set Title", value=".reactionnewtitle \"new title\"", inline=False)
+    ReactionEmbed.add_field(name="Add Role", value=".ReactionAddRole @Role Emoji here", inline=False)
+    ReactionEmbed.add_field(name="Add Post", value=".ReactionSendPost", inline=False)
 
     await ctx.send(embed=ReactionEmbed)
     await ctx.message.delete()
 
 @client.command()
-async def purge(ctx):
-    username1 = ctx.message.author.name
-    await ctx.channel.purge(limit=10, check=purge)
-    await ctx.send(username1+" deleted 10 messages")
+async def ReactionNewTitle(ctx, *, thetitle):
+
+    global reaction_title
+    reaction_title = thetitle
+    
+    await ctx.send(f"The title is now `{reaction_title}`")
+    await ctx.message.delete()
+
+
+@client.command(name = "ReactionAddRole")
+async def ReactionAddRole(ctx, role: discord.Role, reaction1):
+
+    if role != None:
+        reactions[role.name] = reaction1
+        await ctx.send(f"Role `{role.name}` has been added with {reaction1}.")
+    
+    else:
+        await ctx.send("Try Again")
+
+@client.command(name = "ReactionRemoveRole")
+async def ReactionRemoveRole(ctx, role: discord.Role):
+    if role.name in reactions:
+        del reactions[role.name]
+        await ctx.send(f"Role {role.name} has been successfully deleted.")
+    else:
+        await ctx.send("That role is not there")
+
+@client.command()
+async def ReactionSendPost(ctx):
+    description = "React To Add Roles\n"
+
+    for role in reactions:
+        description += f'`{role}` - {reactions[role]}\n'
+
+    embed = discord.Embed(title=reaction_title, description=description, color=0xabcdef)
+    embed.set_author(name="BestBot")
+
+    await ctx.send(embed=embed)
+
+
 
 
 @client.command()
-async def spam(ctx, string1):
+async def purge(ctx, int2):
+    username1 = ctx.message.author.name
+    int2 = int(int2)
+    await ctx.channel.purge(limit=int2, check=purge)
+    message69 = f'{username1} deleted {int2} messages'
+    await ctx.send(message69)
+    del int2
+
+
+@client.command()
+async def spam(ctx, *, string1):
 
     await ctx.send((string1+' ')*40)
+
+
+
+
+
+
+
 
 
 
@@ -242,11 +348,10 @@ async def spam(ctx, string1):
 
 
 
-
 TOKEN = os.getenv('pp123')
 
 
-client.run('TOKEN')
+client.run('NzgxNjMzNTUyODkwNDYyMjA4.X8Ae-Q.HJx8wFu6KqoCliBwLBcCq56Bzpo')
 
 
 
